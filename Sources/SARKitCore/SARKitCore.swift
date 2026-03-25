@@ -3,16 +3,15 @@ import Foundation
 /// SARKitCore — lightweight SDK for sessions and custom events.
 /// Safe for app extensions (no StoreKit, no AdServices).
 ///
-/// Usage in keyboard extensions:
+/// Usage:
 /// ```swift
 /// import SARKitCore
 ///
-/// SARKitCore.configure(apiKey: "sar_live_xxxxx")
-/// SARKitCore.identify("userHash")
+/// SARKitCore.configure(apiKey: "sar_live_xxxxx", userId: "userHash")
 /// SARKitCore.track("keyboard_opened")
 /// ```
 public final class SARKitCore {
-    public static let sdkVersion = "2.0.8"
+    public static let sdkVersion = "2.1.0"
 
     public static var shared: SARKitCore?
 
@@ -37,8 +36,20 @@ public final class SARKitCore {
 
     // MARK: - Public API
 
-    /// Configure and start. Call once.
-    public static func configure(apiKey: String, serverURL: String? = nil, debug: Bool = false) {
+    /// Configure and start the SDK. Call once at app launch.
+    ///
+    /// - Parameters:
+    ///   - apiKey: Your SearchAdsRadar API key.
+    ///   - userId: Optional user ID to set before any events fire.
+    ///             Equivalent to calling `identify()` before `configure()`.
+    ///   - serverURL: Override server URL (for testing).
+    ///   - debug: Enable console logging.
+    public static func configure(
+        apiKey: String,
+        userId: String? = nil,
+        serverURL: String? = nil,
+        debug: Bool = false
+    ) {
         guard shared == nil else {
             SARLog.info("Already configured, ignoring duplicate call")
             return
@@ -47,27 +58,49 @@ public final class SARKitCore {
         let config = SARConfig(apiKey: apiKey, serverURL: serverURL, debug: debug)
         SARLog.isEnabled = config.debug
         SARLog.info("Configuring SARKitCore v\(sdkVersion)")
-        SARLog.info("Server: \(config.serverURL)")
 
         let instance = SARKitCore(config: config)
+
+        // Set userId BEFORE starting — so first events include it
+        if let userId = userId {
+            instance.userIDBox.value = userId
+            SARLog.info("User pre-identified: \(userId)")
+        }
+
         shared = instance
         instance.start()
     }
 
     /// Link this device to a server-side user ID.
+    /// If called after configure(), subsequent events will include this ID.
+    /// For best results, pass userId in configure() instead.
     public static func identify(_ userId: String) {
         guard let instance = shared else {
-            SARLog.error("SARKitCore not configured. Call configure() first.")
+            SARLog.error("Not configured. Call configure() first.")
             return
         }
         instance.userIDBox.value = userId
         SARLog.info("User identified: \(userId)")
     }
 
+    /// Clear user identity and reset state. Call on logout.
+    /// Pending events for the previous user are flushed before reset.
+    public static func reset() {
+        guard let instance = shared else { return }
+
+        let previousUser = instance.userIDBox.value
+        instance.userIDBox.value = nil
+
+        // Flush pending events (they belong to the previous user)
+        instance.client.flushPendingEvents()
+
+        SARLog.info("Reset — cleared user \(previousUser ?? "anon")")
+    }
+
     /// Track a custom event.
     public static func track(_ name: String, properties: [String: Any] = [:]) {
         guard let instance = shared else {
-            SARLog.error("SARKitCore not configured. Call configure() first.")
+            SARLog.error("Not configured. Call configure() first.")
             return
         }
 
@@ -89,9 +122,11 @@ public final class SARKitCore {
         instance.client.send(event)
     }
 
+    // MARK: - Private
+
     private func start() {
         client.flushPendingEvents()
         session.startObserving()
-        SARLog.info("SARKitCore started successfully")
+        SARLog.info("Started successfully")
     }
 }

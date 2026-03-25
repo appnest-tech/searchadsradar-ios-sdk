@@ -23,6 +23,9 @@ let package = Package(
             name: "SARKitCore",
             dependencies: [],
             path: "Sources/SARKitCore",
+            resources: [
+                .copy("PrivacyInfo.xcprivacy")
+            ],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency=minimal")
             ]

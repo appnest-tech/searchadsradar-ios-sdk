@@ -3,25 +3,27 @@ import Foundation
 
 /// SARKit — full SDK with attribution + StoreKit transactions + sessions.
 /// Use this in your main app target. For extensions, use `SARKitCore`.
-///
-/// Usage:
-/// ```swift
-/// import SARKit
-///
-/// SARKit.configure(apiKey: "sar_live_xxxxx")
-/// SARKit.identify("userHash")
-/// ```
 public final class SARKit {
-    public static let sdkVersion = "2.0.8"
+    public static let sdkVersion = "2.1.0"
 
     private static var attribution: SARAttribution?
     private static var transactions: SARTransactions?
 
     /// Configure the full SDK. Call once in your main app.
-    /// Starts attribution capture, StoreKit transaction listener, and sessions.
-    public static func configure(apiKey: String, serverURL: String? = nil, debug: Bool = false) {
-        // Configure the core (sessions, identity, network)
-        SARKitCore.configure(apiKey: apiKey, serverURL: serverURL, debug: debug)
+    ///
+    /// - Parameters:
+    ///   - apiKey: Your SearchAdsRadar API key.
+    ///   - userId: Optional user ID to set before any events fire.
+    ///   - serverURL: Override server URL (for testing).
+    ///   - debug: Enable console logging.
+    public static func configure(
+        apiKey: String,
+        userId: String? = nil,
+        serverURL: String? = nil,
+        debug: Bool = false
+    ) {
+        // Configure core (sessions, identity, network) — userId set before events fire
+        SARKitCore.configure(apiKey: apiKey, userId: userId, serverURL: serverURL, debug: debug)
 
         guard let core = SARKitCore.shared else { return }
 
@@ -40,6 +42,11 @@ public final class SARKit {
     /// Link this device to a server-side user ID.
     public static func identify(_ userId: String) {
         SARKitCore.identify(userId)
+    }
+
+    /// Clear user identity and reset state. Call on logout.
+    public static func reset() {
+        SARKitCore.reset()
     }
 
     /// Track a custom event.
