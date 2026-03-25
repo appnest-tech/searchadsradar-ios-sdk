@@ -21,8 +21,8 @@ public final class SARKit {
     private let config: SARConfig
     private let client: SARClient
     private let identity: SARIdentity
-    private let attribution: SARAttribution
-    private let transactions: SARTransactions
+    private let attribution: SARAttribution?
+    private let transactions: SARTransactions?
     private let session: SARSession
     private let userIDBox = UserIDBox()
 
@@ -37,8 +37,17 @@ public final class SARKit {
         self.identity = SARIdentity()
         let box = self.userIDBox
         let userIDProvider: () -> String? = { box.value }
-        self.attribution = SARAttribution(client: client, identity: identity, userIDProvider: userIDProvider)
-        self.transactions = SARTransactions(client: client, identity: identity, userIDProvider: userIDProvider)
+
+        // In app extensions, don't create attribution or transaction objects at all.
+        // StoreKit framework loading alone can crash in extension sandboxes.
+        if Self.isAppExtension {
+            self.attribution = nil
+            self.transactions = nil
+        } else {
+            self.attribution = SARAttribution(client: client, identity: identity, userIDProvider: userIDProvider)
+            self.transactions = SARTransactions(client: client, identity: identity, userIDProvider: userIDProvider)
+        }
+
         self.session = SARSession(client: client, identity: identity, userIDProvider: userIDProvider)
     }
 
@@ -124,18 +133,17 @@ public final class SARKit {
         // 1. Flush any events queued from previous sessions
         client.flushPendingEvents()
 
-        if !Self.isAppExtension {
-            // 2. Capture attribution (main app only — extensions can't use AdServices)
-            attribution.captureIfNeeded()
+        // 2. Capture attribution (main app only)
+        attribution?.captureIfNeeded()
 
-            // 3. Start transaction listener (main app only — StoreKit 2 has
-            //    NULL fields in extensions that cause crashes)
-            transactions.startListening()
-        } else {
-            SARLog.info("Running in app extension — skipping attribution and transactions")
+        // 3. Start transaction listener (main app only)
+        transactions?.startListening()
+
+        if Self.isAppExtension {
+            SARLog.info("Running in app extension — sessions and custom events only")
         }
 
-        // 4. Start session tracking (works in both main app and extensions)
+        // 4. Start session tracking (works everywhere)
         session.startObserving()
 
         SARLog.info("SARKit started successfully")
