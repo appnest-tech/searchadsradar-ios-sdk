@@ -9,15 +9,17 @@ final class SARSession {
     private let client: SARClient
     private let identity: SARIdentity
     private let appID: String
+    private let userIDProvider: () -> String?
 
     private let firstLaunchKey = "com.searchadsradar.sarkit.first_launch"
     private let sessionCountKey = "com.searchadsradar.sarkit.session_count"
     private let lastSessionKey = "com.searchadsradar.sarkit.last_session"
 
-    init(client: SARClient, identity: SARIdentity, appID: String) {
+    init(client: SARClient, identity: SARIdentity, appID: String, userIDProvider: @escaping () -> String?) {
         self.client = client
         self.identity = identity
         self.appID = appID
+        self.userIDProvider = userIDProvider
     }
 
     /// Call on app launch / foreground. Tracks the session and sends an event.
@@ -55,6 +57,7 @@ final class SARSession {
             type: .session,
             appID: appID,
             deviceID: identity.deviceID,
+            userID: userIDProvider(),
             timestamp: now,
             sdkVersion: SARKit.sdkVersion,
             device: identity.deviceInfo,

@@ -11,6 +11,9 @@ public struct SARConfig {
     /// Enable verbose logging for debugging. Default: false.
     public var debug: Bool
 
+    /// Server-side user ID (e.g., RevenueCat app_user_id). Set via SARKit.identify().
+    public var userID: String?
+
     public init(agentURL: String, appID: String, debug: Bool = false) {
         guard let url = URL(string: agentURL) else {
             fatalError("[SARKit] Invalid agent URL: \(agentURL)")
@@ -18,5 +21,6 @@ public struct SARConfig {
         self.agentURL = url
         self.appID = appID
         self.debug = debug
+        self.userID = nil
     }
 }

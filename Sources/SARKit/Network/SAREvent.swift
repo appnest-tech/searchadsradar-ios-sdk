@@ -12,6 +12,7 @@ public struct SAREvent: Codable {
     let type: SAREventType
     let appID: String
     let deviceID: String
+    let userID: String?
     let timestamp: Date
     let sdkVersion: String
     let device: SARDeviceInfo

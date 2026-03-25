@@ -14,7 +14,7 @@ import Foundation
 /// - StoreKit 2 transactions (purchases, renewals, refunds)
 /// - App sessions and retention days
 public final class SARKit {
-    public static let sdkVersion = "1.0.0"
+    public static let sdkVersion = "1.1.0"
 
     private static var shared: SARKit?
 
@@ -24,14 +24,22 @@ public final class SARKit {
     private let attribution: SARAttribution
     private let transactions: SARTransactions
     private let session: SARSession
+    private let userIDBox = UserIDBox()
+
+    /// Mutable box for userID — shared with subsystems via closure.
+    private class UserIDBox {
+        var value: String?
+    }
 
     private init(config: SARConfig) {
         self.config = config
         self.client = SARClient(agentURL: config.agentURL)
         self.identity = SARIdentity()
-        self.attribution = SARAttribution(client: client, identity: identity, appID: config.appID)
-        self.transactions = SARTransactions(client: client, identity: identity, appID: config.appID)
-        self.session = SARSession(client: client, identity: identity, appID: config.appID)
+        let box = self.userIDBox
+        let userIDProvider: () -> String? = { box.value }
+        self.attribution = SARAttribution(client: client, identity: identity, appID: config.appID, userIDProvider: userIDProvider)
+        self.transactions = SARTransactions(client: client, identity: identity, appID: config.appID, userIDProvider: userIDProvider)
+        self.session = SARSession(client: client, identity: identity, appID: config.appID, userIDProvider: userIDProvider)
     }
 
     // MARK: - Public API
@@ -57,6 +65,21 @@ public final class SARKit {
         let instance = SARKit(config: config)
         shared = instance
         instance.start()
+    }
+
+    /// Link this device to a server-side user ID (e.g., RevenueCat app_user_id).
+    ///
+    /// Call after the user is identified in your system. All subsequent events
+    /// will include this user ID alongside the device ID (IDFV).
+    ///
+    /// - Parameter userId: Your server-side user identifier.
+    public static func identify(_ userId: String) {
+        guard let instance = shared else {
+            SARLog.error("SARKit not configured. Call SARKit.configure() first.")
+            return
+        }
+        instance.userIDBox.value = userId
+        SARLog.info("User identified: \(userId)")
     }
 
     /// Manually send a custom event to the agent.
@@ -85,6 +108,7 @@ public final class SARKit {
             type: .session,
             appID: instance.config.appID,
             deviceID: instance.identity.deviceID,
+            userID: instance.config.userID,
             timestamp: Date(),
             sdkVersion: sdkVersion,
             device: instance.identity.deviceInfo,

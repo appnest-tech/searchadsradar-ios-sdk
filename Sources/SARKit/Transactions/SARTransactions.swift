@@ -8,12 +8,14 @@ final class SARTransactions {
     private let client: SARClient
     private let identity: SARIdentity
     private let appID: String
+    private let userIDProvider: () -> String?
     private var updateTask: Task<Void, Never>?
 
-    init(client: SARClient, identity: SARIdentity, appID: String) {
+    init(client: SARClient, identity: SARIdentity, appID: String, userIDProvider: @escaping () -> String?) {
         self.client = client
         self.identity = identity
         self.appID = appID
+        self.userIDProvider = userIDProvider
     }
 
     /// Start listening for transaction updates.
@@ -105,6 +107,7 @@ final class SARTransactions {
             type: .transaction,
             appID: appID,
             deviceID: identity.deviceID,
+            userID: userIDProvider(),
             timestamp: Date(),
             sdkVersion: SARKit.sdkVersion,
             device: identity.deviceInfo,
