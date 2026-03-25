@@ -115,17 +115,27 @@ public final class SARKit {
 
     // MARK: - Private
 
+    /// Whether we're running inside an app extension (keyboard, widget, etc.)
+    private static var isAppExtension: Bool {
+        Bundle.main.bundlePath.hasSuffix(".appex")
+    }
+
     private func start() {
         // 1. Flush any events queued from previous sessions
         client.flushPendingEvents()
 
-        // 2. Capture attribution (only on first launch)
-        attribution.captureIfNeeded()
+        if !Self.isAppExtension {
+            // 2. Capture attribution (main app only — extensions can't use AdServices)
+            attribution.captureIfNeeded()
 
-        // 3. Start transaction listener
-        transactions.startListening()
+            // 3. Start transaction listener (main app only — StoreKit 2 has
+            //    NULL fields in extensions that cause crashes)
+            transactions.startListening()
+        } else {
+            SARLog.info("Running in app extension — skipping attribution and transactions")
+        }
 
-        // 4. Start session tracking
+        // 4. Start session tracking (works in both main app and extensions)
         session.startObserving()
 
         SARLog.info("SARKit started successfully")
