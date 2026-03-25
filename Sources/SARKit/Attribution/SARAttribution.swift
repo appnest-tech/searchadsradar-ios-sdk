@@ -31,6 +31,7 @@ public final class SARAttribution {
 
             let event = SAREvent.create(
                 type: .attribution,
+            anonymousID: identity.anonymousID,
                 deviceID: identity.deviceID,
                 userID: userIDProvider(),
                 device: identity.deviceInfo,

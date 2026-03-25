@@ -10,6 +10,7 @@ public enum SAREventType: String, Codable {
 /// A single event payload sent to the SearchAdsRadar server.
 public struct SAREvent: Codable {
     let type: SAREventType
+    let anonymousID: String
     let bundleID: String
     let deviceID: String
     let userID: String?
@@ -21,6 +22,7 @@ public struct SAREvent: Codable {
     /// Create an event with the current process's bundle ID auto-populated.
     public static func create(
         type: SAREventType,
+        anonymousID: String,
         deviceID: String,
         userID: String?,
         timestamp: Date = Date(),
@@ -30,6 +32,7 @@ public struct SAREvent: Codable {
     ) -> SAREvent {
         SAREvent(
             type: type,
+            anonymousID: anonymousID,
             bundleID: Bundle.main.bundleIdentifier ?? "unknown",
             deviceID: deviceID,
             userID: userID,

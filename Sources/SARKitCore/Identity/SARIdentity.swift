@@ -6,8 +6,20 @@ import UIKit
 /// Collects stable device identity and context.
 public final class SARIdentity: Sendable {
 
-    /// IDFV — stable per vendor, no permission needed.
-    /// In keyboard extensions, UIDevice may not have IDFV — falls back to "unknown".
+    private static let anonymousIDKey = "com.searchadsradar.sarkit.anonymous_id"
+
+    /// SDK-generated anonymous ID. Persisted across sessions.
+    /// Created on first launch, stable until app is deleted.
+    public let anonymousID: String = {
+        if let existing = UserDefaults.standard.string(forKey: anonymousIDKey) {
+            return existing
+        }
+        let newID = "sar_" + UUID().uuidString.replacingOccurrences(of: "-", with: "").lowercased().prefix(24)
+        UserDefaults.standard.set(String(newID), forKey: anonymousIDKey)
+        return String(newID)
+    }()
+
+    /// IDFV — hardware device identifier, stable per vendor.
     public let deviceID: String = {
         #if canImport(UIKit) && !os(watchOS)
         return UIDevice.current.identifierForVendor?.uuidString ?? "unknown"

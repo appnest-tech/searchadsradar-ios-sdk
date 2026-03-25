@@ -38,15 +38,10 @@ public final class SARKitCore {
 
     /// Configure and start the SDK. Call once at app launch.
     ///
-    /// - Parameters:
-    ///   - apiKey: Your SearchAdsRadar API key.
-    ///   - userId: Optional user ID to set before any events fire.
-    ///             Equivalent to calling `identify()` before `configure()`.
-    ///   - serverURL: Override server URL (for testing).
-    ///   - debug: Enable console logging.
+    /// Events are tracked immediately with an anonymous ID.
+    /// Call `identify()` when the user's server-side ID becomes available.
     public static func configure(
         apiKey: String,
-        userId: String? = nil,
         serverURL: String? = nil,
         debug: Bool = false
     ) {
@@ -58,15 +53,9 @@ public final class SARKitCore {
         let config = SARConfig(apiKey: apiKey, serverURL: serverURL, debug: debug)
         SARLog.isEnabled = config.debug
         SARLog.info("Configuring SARKitCore v\(sdkVersion)")
+        SARLog.info("Anonymous ID: \(SARIdentity().anonymousID)")
 
         let instance = SARKitCore(config: config)
-
-        // Set userId BEFORE starting — so first events include it
-        if let userId = userId {
-            instance.userIDBox.value = userId
-            SARLog.info("User pre-identified: \(userId)")
-        }
-
         shared = instance
         instance.start()
     }
@@ -114,6 +103,7 @@ public final class SARKitCore {
 
         let event = SAREvent.create(
             type: .session,
+            anonymousID: instance.identity.anonymousID,
             deviceID: instance.identity.deviceID,
             userID: instance.userIDBox.value,
             device: instance.identity.deviceInfo,

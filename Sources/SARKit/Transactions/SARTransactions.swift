@@ -97,6 +97,7 @@ public final class SARTransactions {
 
         let event = SAREvent.create(
             type: .transaction,
+            anonymousID: identity.anonymousID,
             deviceID: identity.deviceID,
             userID: userIDProvider(),
             device: identity.deviceInfo,

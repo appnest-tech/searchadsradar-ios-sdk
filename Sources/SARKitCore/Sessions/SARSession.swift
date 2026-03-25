@@ -118,6 +118,7 @@ public final class SARSession {
 
         let event = SAREvent.create(
             type: .session,
+            anonymousID: identity.anonymousID,
             deviceID: identity.deviceID,
             userID: userIDProvider(),
             timestamp: now,

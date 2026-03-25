@@ -18,12 +18,10 @@ public final class SARKit {
     ///   - debug: Enable console logging.
     public static func configure(
         apiKey: String,
-        userId: String? = nil,
         serverURL: String? = nil,
         debug: Bool = false
     ) {
-        // Configure core (sessions, identity, network) — userId set before events fire
-        SARKitCore.configure(apiKey: apiKey, userId: userId, serverURL: serverURL, debug: debug)
+        SARKitCore.configure(apiKey: apiKey, serverURL: serverURL, debug: debug)
 
         guard let core = SARKitCore.shared else { return }
 
