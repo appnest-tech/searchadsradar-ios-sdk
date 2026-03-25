@@ -7,15 +7,29 @@ let package = Package(
         .iOS(.v16)
     ],
     products: [
+        // Full SDK — main app (StoreKit + AdServices + sessions)
         .library(
             name: "SARKit",
             targets: ["SARKit"]
+        ),
+        // Core SDK — extensions (sessions + custom events only, no StoreKit)
+        .library(
+            name: "SARKitCore",
+            targets: ["SARKitCore"]
         )
     ],
     targets: [
         .target(
-            name: "SARKit",
+            name: "SARKitCore",
             dependencies: [],
+            path: "Sources/SARKitCore",
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency=minimal")
+            ]
+        ),
+        .target(
+            name: "SARKit",
+            dependencies: ["SARKitCore"],
             path: "Sources/SARKit",
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency=minimal")

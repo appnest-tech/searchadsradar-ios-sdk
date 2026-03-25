@@ -19,12 +19,12 @@ public struct SAREvent: Codable {
     let data: [String: AnyCodable]
 
     /// Create an event with the current process's bundle ID auto-populated.
-    static func create(
+    public static func create(
         type: SAREventType,
         deviceID: String,
         userID: String?,
         timestamp: Date = Date(),
-        sdkVersion: String = SARKit.sdkVersion,
+        sdkVersion: String = SARKitCore.sdkVersion,
         device: SARDeviceInfo,
         data: [String: AnyCodable]
     ) -> SAREvent {

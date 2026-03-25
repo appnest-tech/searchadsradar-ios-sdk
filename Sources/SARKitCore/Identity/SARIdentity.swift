@@ -4,11 +4,11 @@ import UIKit
 #endif
 
 /// Collects stable device identity and context.
-final class SARIdentity: Sendable {
+public final class SARIdentity: Sendable {
 
     /// IDFV — stable per vendor, no permission needed.
     /// In keyboard extensions, UIDevice may not have IDFV — falls back to "unknown".
-    let deviceID: String = {
+    public let deviceID: String = {
         #if canImport(UIKit) && !os(watchOS)
         return UIDevice.current.identifierForVendor?.uuidString ?? "unknown"
         #else
@@ -17,7 +17,7 @@ final class SARIdentity: Sendable {
     }()
 
     /// Device info for event context. All fields safe for app extensions.
-    var deviceInfo: SARDeviceInfo {
+    public var deviceInfo: SARDeviceInfo {
         let info = Bundle.main.infoDictionary
         return SARDeviceInfo(
             model: deviceModel,

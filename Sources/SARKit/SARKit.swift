@@ -1,151 +1,49 @@
 import Foundation
+@_exported import SARKitCore
 
-/// SearchAdsRadar SDK — lightweight analytics for ASA attribution and revenue tracking.
+/// SARKit — full SDK with attribution + StoreKit transactions + sessions.
+/// Use this in your main app target. For extensions, use `SARKitCore`.
 ///
 /// Usage:
 /// ```swift
 /// import SARKit
 ///
 /// SARKit.configure(apiKey: "sar_live_xxxxx")
+/// SARKit.identify("userHash")
 /// ```
-///
-/// That's it. The SDK automatically captures:
-/// - AdServices attribution token (first launch only)
-/// - StoreKit 2 transactions (purchases, renewals, refunds)
-/// - App sessions and retention days
 public final class SARKit {
-    public static let sdkVersion = "2.0.0"
+    public static let sdkVersion = "2.0.8"
 
-    private static var shared: SARKit?
+    private static var attribution: SARAttribution?
+    private static var transactions: SARTransactions?
 
-    private let config: SARConfig
-    private let client: SARClient
-    private let identity: SARIdentity
-    private let attribution: SARAttribution?
-    private let transactions: SARTransactions?
-    private let session: SARSession
-    private let userIDBox = UserIDBox()
-
-    /// Mutable box for userID — shared with subsystems via closure.
-    private class UserIDBox {
-        var value: String?
-    }
-
-    private init(config: SARConfig) {
-        self.config = config
-        self.client = SARClient(config: config)
-        self.identity = SARIdentity()
-        let box = self.userIDBox
-        let userIDProvider: () -> String? = { box.value }
-
-        // In app extensions, don't create attribution or transaction objects at all.
-        // StoreKit framework loading alone can crash in extension sandboxes.
-        if Self.isAppExtension {
-            self.attribution = nil
-            self.transactions = nil
-        } else {
-            self.attribution = SARAttribution(client: client, identity: identity, userIDProvider: userIDProvider)
-            self.transactions = SARTransactions(client: client, identity: identity, userIDProvider: userIDProvider)
-        }
-
-        self.session = SARSession(client: client, identity: identity, userIDProvider: userIDProvider)
-    }
-
-    // MARK: - Public API
-
-    /// Configure and start the SDK. Call once in your AppDelegate or App init.
-    ///
-    /// - Parameters:
-    ///   - apiKey: Your SearchAdsRadar API key. Identifies your app.
-    ///   - serverURL: Override the server URL (for testing or self-hosted). Defaults to SearchAdsRadar production.
-    ///   - debug: Enable verbose logging. Default: false.
+    /// Configure the full SDK. Call once in your main app.
+    /// Starts attribution capture, StoreKit transaction listener, and sessions.
     public static func configure(apiKey: String, serverURL: String? = nil, debug: Bool = false) {
-        guard shared == nil else {
-            SARLog.info("Already configured, ignoring duplicate call")
-            return
-        }
+        // Configure the core (sessions, identity, network)
+        SARKitCore.configure(apiKey: apiKey, serverURL: serverURL, debug: debug)
 
-        let config = SARConfig(apiKey: apiKey, serverURL: serverURL, debug: debug)
-        SARLog.isEnabled = config.debug
-        SARLog.info("Configuring SARKit v\(sdkVersion)")
-        SARLog.info("Server: \(config.serverURL)")
+        guard let core = SARKitCore.shared else { return }
 
-        let instance = SARKit(config: config)
-        shared = instance
-        instance.start()
+        // Start attribution (main app only)
+        let userIDProvider: () -> String? = { core.userIDBox.value }
+        let attr = SARAttribution(client: core.client, identity: core.identity, userIDProvider: userIDProvider)
+        attr.captureIfNeeded()
+        attribution = attr
+
+        // Start StoreKit transaction listener (main app only)
+        let tx = SARTransactions(client: core.client, identity: core.identity, userIDProvider: userIDProvider)
+        tx.startListening()
+        transactions = tx
     }
 
-    /// Link this device to a server-side user ID (e.g., RevenueCat app_user_id).
-    ///
-    /// Call after the user is identified in your system. All subsequent events
-    /// will include this user ID alongside the device ID (IDFV).
-    ///
-    /// - Parameter userId: Your server-side user identifier.
+    /// Link this device to a server-side user ID.
     public static func identify(_ userId: String) {
-        guard let instance = shared else {
-            SARLog.error("SARKit not configured. Call SARKit.configure() first.")
-            return
-        }
-        instance.userIDBox.value = userId
-        SARLog.info("User identified: \(userId)")
+        SARKitCore.identify(userId)
     }
 
-    /// Manually send a custom event.
-    ///
-    /// Use this for tracking app-specific events like onboarding completion,
-    /// paywall views, or feature usage — segmented by acquisition channel.
-    ///
-    /// - Parameters:
-    ///   - name: Event name (e.g., "paywall_shown", "onboarding_complete").
-    ///   - properties: Optional key-value pairs.
+    /// Track a custom event.
     public static func track(_ name: String, properties: [String: Any] = [:]) {
-        guard let instance = shared else {
-            SARLog.error("SARKit not configured. Call SARKit.configure() first.")
-            return
-        }
-
-        var data: [String: AnyCodable] = [
-            "name": AnyCodable(name),
-            "eventType": AnyCodable("custom")
-        ]
-        for (key, value) in properties {
-            data[key] = AnyCodable(value)
-        }
-
-        let event = SAREvent.create(
-            type: .session,
-            deviceID: instance.identity.deviceID,
-            userID: instance.userIDBox.value,
-            device: instance.identity.deviceInfo,
-            data: data
-        )
-        instance.client.send(event)
-    }
-
-    // MARK: - Private
-
-    /// Whether we're running inside an app extension (keyboard, widget, etc.)
-    private static var isAppExtension: Bool {
-        Bundle.main.bundlePath.hasSuffix(".appex")
-    }
-
-    private func start() {
-        // 1. Flush any events queued from previous sessions
-        client.flushPendingEvents()
-
-        // 2. Capture attribution (main app only)
-        attribution?.captureIfNeeded()
-
-        // 3. Start transaction listener (main app only)
-        transactions?.startListening()
-
-        if Self.isAppExtension {
-            SARLog.info("Running in app extension — sessions and custom events only")
-        }
-
-        // 4. Start session tracking (works everywhere)
-        session.startObserving()
-
-        SARLog.info("SARKit started successfully")
+        SARKitCore.track(name, properties: properties)
     }
 }

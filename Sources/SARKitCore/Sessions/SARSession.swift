@@ -11,7 +11,7 @@ import UIKit
 /// - Multiple foreground/background cycles within the timeout are the same session.
 /// - Cold launch always starts a new session.
 /// - Session count increments only on new sessions.
-final class SARSession {
+public final class SARSession {
     private let client: SARClient
     private let identity: SARIdentity
     private let userIDProvider: () -> String?
@@ -29,14 +29,14 @@ final class SARSession {
     /// Whether we've already sent the initial session for this cold launch.
     private var hasSentInitialSession = false
 
-    init(client: SARClient, identity: SARIdentity, userIDProvider: @escaping () -> String?) {
+    public init(client: SARClient, identity: SARIdentity, userIDProvider: @escaping () -> String?) {
         self.client = client
         self.identity = identity
         self.userIDProvider = userIDProvider
     }
 
     /// Register for lifecycle notifications and track the initial (cold launch) session.
-    func startObserving() {
+    public func startObserving() {
         #if canImport(UIKit) && !os(watchOS)
         NotificationCenter.default.addObserver(
             forName: UIApplication.didEnterBackgroundNotification,

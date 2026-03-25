@@ -2,7 +2,7 @@ import Foundation
 
 /// HTTP client that sends events to the SearchAdsRadar server.
 /// Sends API key in header for authentication. Queues events when offline.
-final class SARClient: @unchecked Sendable {
+public final class SARClient: @unchecked Sendable {
     private let config: SARConfig
     private let session: URLSession
     private let queue = DispatchQueue(label: "com.searchadsradar.sarkit.client")
@@ -16,7 +16,7 @@ final class SARClient: @unchecked Sendable {
     private var pendingEvents: [SAREvent] = []
     private let storageKey = "com.searchadsradar.sarkit.pending_events"
 
-    init(config: SARConfig) {
+    public init(config: SARConfig) {
         self.config = config
         let urlConfig = URLSessionConfiguration.default
         urlConfig.timeoutIntervalForRequest = 15
@@ -26,7 +26,7 @@ final class SARClient: @unchecked Sendable {
     }
 
     /// Send an event to the server. Queues if send fails.
-    func send(_ event: SAREvent) {
+    public func send(_ event: SAREvent) {
         queue.async { [weak self] in
             self?.doSend(event)
         }
@@ -37,7 +37,7 @@ final class SARClient: @unchecked Sendable {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("SARKit/\(SARKit.sdkVersion)", forHTTPHeaderField: "User-Agent")
+        request.setValue("SARKit/\(SARKitCore.sdkVersion)", forHTTPHeaderField: "User-Agent")
         request.setValue(config.apiKey, forHTTPHeaderField: "x-api-key")
 
         do {
@@ -70,7 +70,7 @@ final class SARClient: @unchecked Sendable {
     }
 
     /// Retry sending any queued events. Called on app foreground.
-    func flushPendingEvents() {
+    public func flushPendingEvents() {
         queue.async { [weak self] in
             guard let self = self, !self.pendingEvents.isEmpty else { return }
             let events = self.pendingEvents
@@ -101,15 +101,15 @@ final class SARClient: @unchecked Sendable {
 }
 
 /// Minimal internal logger.
-enum SARLog {
-    nonisolated(unsafe) static var isEnabled = false
+public enum SARLog {
+    public nonisolated(unsafe) static var isEnabled = false
 
-    static func info(_ message: String) {
+    public static func info(_ message: String) {
         guard isEnabled else { return }
         print("[SARKit] \(message)")
     }
 
-    static func error(_ message: String) {
+    public static func error(_ message: String) {
         guard isEnabled else { return }
         print("[SARKit ERROR] \(message)")
     }

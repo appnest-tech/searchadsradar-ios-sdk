@@ -4,20 +4,20 @@ import StoreKit
 /// Listens for StoreKit 2 transactions and sends them to the server.
 /// Captures: purchases, renewals, refunds, revocations — everything.
 @available(iOS 16.0, macOS 13.0, *)
-final class SARTransactions {
+public final class SARTransactions {
     private let client: SARClient
     private let identity: SARIdentity
     private let userIDProvider: () -> String?
     private var updateTask: Task<Void, Never>?
 
-    init(client: SARClient, identity: SARIdentity, userIDProvider: @escaping () -> String?) {
+    public init(client: SARClient, identity: SARIdentity, userIDProvider: @escaping () -> String?) {
         self.client = client
         self.identity = identity
         self.userIDProvider = userIDProvider
     }
 
     /// Start listening for transaction updates.
-    func startListening() {
+    public func startListening() {
         // Send current entitlements on launch (catches renewals/expirations that happened while app was closed)
         Task {
             await sendCurrentEntitlements()

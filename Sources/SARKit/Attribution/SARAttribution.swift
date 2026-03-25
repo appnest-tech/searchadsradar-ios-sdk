@@ -5,20 +5,20 @@ import AdServices
 
 /// Captures the AdServices attribution token on first launch
 /// and sends it to the SearchAdsRadar server.
-final class SARAttribution {
+public final class SARAttribution {
     private let client: SARClient
     private let identity: SARIdentity
     private let userIDProvider: () -> String?
     private let sentKey = "com.searchadsradar.sarkit.attribution_sent"
 
-    init(client: SARClient, identity: SARIdentity, userIDProvider: @escaping () -> String?) {
+    public init(client: SARClient, identity: SARIdentity, userIDProvider: @escaping () -> String?) {
         self.client = client
         self.identity = identity
         self.userIDProvider = userIDProvider
     }
 
     /// Capture and send attribution token. Only runs once per install.
-    func captureIfNeeded() {
+    public func captureIfNeeded() {
         guard !UserDefaults.standard.bool(forKey: sentKey) else {
             SARLog.info("Attribution already captured, skipping")
             return
