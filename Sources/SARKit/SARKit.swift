@@ -4,7 +4,7 @@ import Foundation
 /// SARKit — full SDK with attribution + StoreKit transactions + sessions.
 /// Use this in your main app target. For extensions, use `SARKitCore`.
 public final class SARKit {
-    public static let sdkVersion = "2.1.0"
+    public static let sdkVersion = SARKitCore.sdkVersion
 
     private static var attribution: SARAttribution?
     private static var transactions: SARTransactions?
@@ -44,6 +44,7 @@ public final class SARKit {
 
     /// Clear user identity and reset state. Call on logout.
     public static func reset() {
+        transactions?.stopListening()
         SARKitCore.reset()
     }
 

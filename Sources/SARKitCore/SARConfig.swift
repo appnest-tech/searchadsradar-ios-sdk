@@ -3,9 +3,10 @@ import Foundation
 /// Configuration for the SARKit SDK.
 public struct SARConfig {
     /// Default server URL for SearchAdsRadar.
+    // swiftlint:disable:next force_unwrapping
     static let defaultServerURL = URL(string: "https://searchadsradar.com")!
 
-    /// The API key that identifies your app. Get it from your SearchAdsRadar dashboard.
+    /// The API key that identifies your app.
     public let apiKey: String
 
     /// The server URL. Defaults to SearchAdsRadar production.
@@ -18,12 +19,12 @@ public struct SARConfig {
         self.apiKey = apiKey
         self.debug = debug
 
-        if let urlString = serverURL {
-            guard let url = URL(string: urlString) else {
-                fatalError("[SARKit] Invalid server URL: \(urlString)")
-            }
+        if let urlString = serverURL, let url = URL(string: urlString) {
             self.serverURL = url
         } else {
+            if serverURL != nil {
+                SARLog.error("Invalid server URL, using default")
+            }
             self.serverURL = Self.defaultServerURL
         }
     }

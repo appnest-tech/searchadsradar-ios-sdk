@@ -33,8 +33,8 @@ public final class SARTransactions {
         SARLog.info("Transaction listener started")
     }
 
-    /// Stop listening.
-    func stopListening() {
+    /// Stop listening for transactions.
+    public func stopListening() {
         updateTask?.cancel()
         updateTask = nil
     }

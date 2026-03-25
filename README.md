@@ -14,7 +14,7 @@ Two products are available:
 
 | Product | Use in | Includes |
 |---------|--------|----------|
-| **SARKit** | Main app target | Attribution + transactions + sessions + custom events |
+| **SARKit** | Main app target | Attribution + StoreKit 2 transactions + sessions + custom events |
 | **SARKitCore** | App extensions (keyboard, widget) | Sessions + custom events only |
 
 > Always use **SARKitCore** for app extensions. Using SARKit in an extension will crash due to StoreKit/AdServices sandbox restrictions.
@@ -26,14 +26,17 @@ Two products are available:
 ```swift
 import SARKit
 
-// At app launch:
+// At app launch (before user identification):
 SARKit.configure(apiKey: "YOUR_API_KEY")
 
-// After user is identified:
+// When user identity is known (e.g., after login/registration):
 SARKit.identify("user_id")
 
 // Track custom events:
 SARKit.track("paywall_shown", properties: ["source": "onboarding"])
+
+// On logout:
+SARKit.reset()
 ```
 
 ### App Extensions
@@ -46,11 +49,22 @@ SARKitCore.identify("user_id")
 SARKitCore.track("keyboard_opened")
 ```
 
+## Identity
+
+The SDK generates an anonymous ID on first launch (`sar_xxxx`), persisted in UserDefaults. This ID is included in every event, enabling tracking before user identification.
+
+When `identify()` is called, subsequent events include both the anonymous ID and user ID. Your server can retroactively link pre-identification events.
+
+```
+Before identify():  { anonymousID: "sar_abc123", userID: null }
+After identify():   { anonymousID: "sar_abc123", userID: "USER_42" }
+```
+
 ## What It Captures
 
 **Automatically (main app):**
-- Apple Search Ads attribution (first launch)
-- StoreKit 2 transactions — purchases, renewals, refunds
+- Apple Search Ads attribution token (first launch, retries on failure)
+- StoreKit 2 transactions — purchases, renewals, refunds (iOS 16+)
 - App sessions with retention metrics
 
 **Automatically (extensions):**
@@ -63,19 +77,25 @@ SARKitCore.track("keyboard_opened")
 
 ### `configure(apiKey:serverURL:debug:)`
 
+Initialize the SDK. Call once at app launch.
+
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | `apiKey` | `String` | Yes | Your API key from SearchAdsRadar |
 | `serverURL` | `String?` | No | Override server URL (defaults to production) |
-| `debug` | `Bool` | No | Enable console logging (default: false) |
+| `debug` | `Bool` | No | Enable `[SARKit]` console logging (default: false) |
 
 ### `identify(_ userId:)`
 
-Link this device to your server-side user ID. Call after authentication.
+Link this device to your server-side user ID. Call when the user's identity is known. Can be called multiple times (e.g., on each app launch after login).
 
 ### `track(_ name:properties:)`
 
-Send a custom event with optional properties.
+Send a custom event with optional key-value properties.
+
+### `reset()`
+
+Clear user identity and flush pending events. Call on logout.
 
 ## Offline Support
 
@@ -90,17 +110,18 @@ The SDK never blocks the main thread and never crashes if the server is down.
 
 ## Session Tracking
 
-Sessions follow the industry standard:
+Sessions follow the industry standard (Amplitude, Firebase):
 - New session on cold launch or after 30 seconds in background
 - Quick foreground/background within 30s = same session
 - Tracks: session count, retention day, days since last session
 
 ## Privacy
 
-- **IDFV only** — no IDFA, no ATT prompt
+- **No IDFA** — uses IDFV (vendor identifier) and SDK-generated anonymous ID
+- **No ATT prompt** required
 - **Zero dependencies** — pure Apple frameworks
 - **No PII collected**
-- iOS 16+ required
+- Includes Apple-required **Privacy Manifest** (PrivacyInfo.xcprivacy)
 
 ## Requirements
 

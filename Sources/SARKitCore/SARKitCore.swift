@@ -11,7 +11,7 @@ import Foundation
 /// SARKitCore.track("keyboard_opened")
 /// ```
 public final class SARKitCore {
-    public static let sdkVersion = "2.1.0"
+    public static let sdkVersion = "3.0.0"
 
     public static var shared: SARKitCore?
 
