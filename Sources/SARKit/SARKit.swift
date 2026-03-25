@@ -103,12 +103,10 @@ public final class SARKit {
             data[key] = AnyCodable(value)
         }
 
-        let event = SAREvent(
+        let event = SAREvent.create(
             type: .session,
             deviceID: instance.identity.deviceID,
             userID: instance.userIDBox.value,
-            timestamp: Date(),
-            sdkVersion: sdkVersion,
             device: instance.identity.deviceInfo,
             data: data
         )

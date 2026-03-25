@@ -116,12 +116,11 @@ final class SARSession {
 
         let isFirst = sessionCount == 1
 
-        let event = SAREvent(
+        let event = SAREvent.create(
             type: .session,
             deviceID: identity.deviceID,
             userID: userIDProvider(),
             timestamp: now,
-            sdkVersion: SARKit.sdkVersion,
             device: identity.deviceInfo,
             data: [
                 "sessionCount": AnyCodable(sessionCount),

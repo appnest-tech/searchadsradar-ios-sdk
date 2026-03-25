@@ -29,12 +29,10 @@ final class SARAttribution {
             let token = try AAAttribution.attributionToken()
             SARLog.info("Got attribution token (\(token.prefix(20))...)")
 
-            let event = SAREvent(
+            let event = SAREvent.create(
                 type: .attribution,
                 deviceID: identity.deviceID,
                 userID: userIDProvider(),
-                timestamp: Date(),
-                sdkVersion: SARKit.sdkVersion,
                 device: identity.deviceInfo,
                 data: [
                     "token": AnyCodable(token)

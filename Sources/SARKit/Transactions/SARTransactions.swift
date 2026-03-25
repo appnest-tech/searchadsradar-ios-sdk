@@ -95,12 +95,10 @@ final class SARTransactions {
             data["jwsPayload"] = AnyCodable(jsonString)
         }
 
-        let event = SAREvent(
+        let event = SAREvent.create(
             type: .transaction,
             deviceID: identity.deviceID,
             userID: userIDProvider(),
-            timestamp: Date(),
-            sdkVersion: SARKit.sdkVersion,
             device: identity.deviceInfo,
             data: data
         )
