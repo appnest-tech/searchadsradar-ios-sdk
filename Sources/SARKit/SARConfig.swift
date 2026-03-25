@@ -2,25 +2,29 @@ import Foundation
 
 /// Configuration for the SARKit SDK.
 public struct SARConfig {
-    /// The base URL of the SearchAdsRadar agent (e.g., "https://my-agent.searchadsradar.com").
-    public let agentURL: URL
+    /// Default server URL for SearchAdsRadar.
+    static let defaultServerURL = URL(string: "https://searchadsradar.com")!
 
-    /// The app's bundle identifier (e.g., "com.example.myapp").
-    public let appID: String
+    /// The API key that identifies your app. Get it from your SearchAdsRadar dashboard.
+    public let apiKey: String
+
+    /// The server URL. Defaults to SearchAdsRadar production.
+    public let serverURL: URL
 
     /// Enable verbose logging for debugging. Default: false.
     public var debug: Bool
 
-    /// Server-side user ID (e.g., RevenueCat app_user_id). Set via SARKit.identify().
-    public var userID: String?
-
-    public init(agentURL: String, appID: String, debug: Bool = false) {
-        guard let url = URL(string: agentURL) else {
-            fatalError("[SARKit] Invalid agent URL: \(agentURL)")
-        }
-        self.agentURL = url
-        self.appID = appID
+    public init(apiKey: String, serverURL: String? = nil, debug: Bool = false) {
+        self.apiKey = apiKey
         self.debug = debug
-        self.userID = nil
+
+        if let urlString = serverURL {
+            guard let url = URL(string: urlString) else {
+                fatalError("[SARKit] Invalid server URL: \(urlString)")
+            }
+            self.serverURL = url
+        } else {
+            self.serverURL = Self.defaultServerURL
+        }
     }
 }

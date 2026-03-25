@@ -4,18 +4,16 @@ import AdServices
 #endif
 
 /// Captures the AdServices attribution token on first launch
-/// and sends it to the SearchAdsRadar agent.
+/// and sends it to the SearchAdsRadar server.
 final class SARAttribution {
     private let client: SARClient
     private let identity: SARIdentity
-    private let appID: String
     private let userIDProvider: () -> String?
     private let sentKey = "com.searchadsradar.sarkit.attribution_sent"
 
-    init(client: SARClient, identity: SARIdentity, appID: String, userIDProvider: @escaping () -> String?) {
+    init(client: SARClient, identity: SARIdentity, userIDProvider: @escaping () -> String?) {
         self.client = client
         self.identity = identity
-        self.appID = appID
         self.userIDProvider = userIDProvider
     }
 
@@ -33,7 +31,6 @@ final class SARAttribution {
 
             let event = SAREvent(
                 type: .attribution,
-                appID: appID,
                 deviceID: identity.deviceID,
                 userID: userIDProvider(),
                 timestamp: Date(),

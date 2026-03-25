@@ -8,17 +8,15 @@ import UIKit
 final class SARSession {
     private let client: SARClient
     private let identity: SARIdentity
-    private let appID: String
     private let userIDProvider: () -> String?
 
     private let firstLaunchKey = "com.searchadsradar.sarkit.first_launch"
     private let sessionCountKey = "com.searchadsradar.sarkit.session_count"
     private let lastSessionKey = "com.searchadsradar.sarkit.last_session"
 
-    init(client: SARClient, identity: SARIdentity, appID: String, userIDProvider: @escaping () -> String?) {
+    init(client: SARClient, identity: SARIdentity, userIDProvider: @escaping () -> String?) {
         self.client = client
         self.identity = identity
-        self.appID = appID
         self.userIDProvider = userIDProvider
     }
 
@@ -55,7 +53,6 @@ final class SARSession {
 
         let event = SAREvent(
             type: .session,
-            appID: appID,
             deviceID: identity.deviceID,
             userID: userIDProvider(),
             timestamp: now,

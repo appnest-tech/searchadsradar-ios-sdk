@@ -1,9 +1,9 @@
 import Foundation
 
-/// HTTP client that sends events to the SearchAdsRadar agent.
-/// Queues events when offline and flushes when possible.
+/// HTTP client that sends events to the SearchAdsRadar server.
+/// Sends API key in header for authentication. Queues events when offline.
 final class SARClient: @unchecked Sendable {
-    private let agentURL: URL
+    private let config: SARConfig
     private let session: URLSession
     private let queue = DispatchQueue(label: "com.searchadsradar.sarkit.client")
     private let encoder: JSONEncoder = {
@@ -16,16 +16,16 @@ final class SARClient: @unchecked Sendable {
     private var pendingEvents: [SAREvent] = []
     private let storageKey = "com.searchadsradar.sarkit.pending_events"
 
-    init(agentURL: URL) {
-        self.agentURL = agentURL
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 15
-        config.waitsForConnectivity = true
-        self.session = URLSession(configuration: config)
+    init(config: SARConfig) {
+        self.config = config
+        let urlConfig = URLSessionConfiguration.default
+        urlConfig.timeoutIntervalForRequest = 15
+        urlConfig.waitsForConnectivity = true
+        self.session = URLSession(configuration: urlConfig)
         loadPendingEvents()
     }
 
-    /// Send an event to the agent. Queues if send fails.
+    /// Send an event to the server. Queues if send fails.
     func send(_ event: SAREvent) {
         queue.async { [weak self] in
             self?.doSend(event)
@@ -33,11 +33,12 @@ final class SARClient: @unchecked Sendable {
     }
 
     private func doSend(_ event: SAREvent) {
-        let endpoint = agentURL.appendingPathComponent("/api/sdk/events")
+        let endpoint = config.serverURL.appendingPathComponent("api/sdk/events")
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("SARKit/\(SARKit.sdkVersion)", forHTTPHeaderField: "User-Agent")
+        request.setValue(config.apiKey, forHTTPHeaderField: "x-api-key")
 
         do {
             request.httpBody = try encoder.encode(event)
@@ -54,6 +55,8 @@ final class SARClient: @unchecked Sendable {
                 success = true
             } else if let error = error {
                 SARLog.error("Send failed: \(error.localizedDescription)")
+            } else if let http = response as? HTTPURLResponse {
+                SARLog.error("Send failed: HTTP \(http.statusCode)")
             }
             semaphore.signal()
         }

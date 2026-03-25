@@ -6,7 +6,7 @@ import Foundation
 /// ```swift
 /// import SARKit
 ///
-/// SARKit.configure(agentURL: "https://my-agent.searchadsradar.com", appID: "com.example.app")
+/// SARKit.configure(apiKey: "sar_live_xxxxx")
 /// ```
 ///
 /// That's it. The SDK automatically captures:
@@ -14,7 +14,7 @@ import Foundation
 /// - StoreKit 2 transactions (purchases, renewals, refunds)
 /// - App sessions and retention days
 public final class SARKit {
-    public static let sdkVersion = "1.1.0"
+    public static let sdkVersion = "2.0.0"
 
     private static var shared: SARKit?
 
@@ -33,13 +33,13 @@ public final class SARKit {
 
     private init(config: SARConfig) {
         self.config = config
-        self.client = SARClient(agentURL: config.agentURL)
+        self.client = SARClient(config: config)
         self.identity = SARIdentity()
         let box = self.userIDBox
         let userIDProvider: () -> String? = { box.value }
-        self.attribution = SARAttribution(client: client, identity: identity, appID: config.appID, userIDProvider: userIDProvider)
-        self.transactions = SARTransactions(client: client, identity: identity, appID: config.appID, userIDProvider: userIDProvider)
-        self.session = SARSession(client: client, identity: identity, appID: config.appID, userIDProvider: userIDProvider)
+        self.attribution = SARAttribution(client: client, identity: identity, userIDProvider: userIDProvider)
+        self.transactions = SARTransactions(client: client, identity: identity, userIDProvider: userIDProvider)
+        self.session = SARSession(client: client, identity: identity, userIDProvider: userIDProvider)
     }
 
     // MARK: - Public API
@@ -47,20 +47,19 @@ public final class SARKit {
     /// Configure and start the SDK. Call once in your AppDelegate or App init.
     ///
     /// - Parameters:
-    ///   - agentURL: The base URL of your SearchAdsRadar agent.
-    ///   - appID: Your app's bundle identifier.
+    ///   - apiKey: Your SearchAdsRadar API key. Identifies your app.
+    ///   - serverURL: Override the server URL (for testing or self-hosted). Defaults to SearchAdsRadar production.
     ///   - debug: Enable verbose logging. Default: false.
-    public static func configure(agentURL: String, appID: String, debug: Bool = false) {
+    public static func configure(apiKey: String, serverURL: String? = nil, debug: Bool = false) {
         guard shared == nil else {
             SARLog.info("Already configured, ignoring duplicate call")
             return
         }
 
-        let config = SARConfig(agentURL: agentURL, appID: appID, debug: debug)
+        let config = SARConfig(apiKey: apiKey, serverURL: serverURL, debug: debug)
         SARLog.isEnabled = config.debug
         SARLog.info("Configuring SARKit v\(sdkVersion)")
-        SARLog.info("Agent: \(config.agentURL)")
-        SARLog.info("App: \(config.appID)")
+        SARLog.info("Server: \(config.serverURL)")
 
         let instance = SARKit(config: config)
         shared = instance
@@ -82,7 +81,7 @@ public final class SARKit {
         SARLog.info("User identified: \(userId)")
     }
 
-    /// Manually send a custom event to the agent.
+    /// Manually send a custom event.
     ///
     /// Use this for tracking app-specific events like onboarding completion,
     /// paywall views, or feature usage — segmented by acquisition channel.
@@ -106,9 +105,8 @@ public final class SARKit {
 
         let event = SAREvent(
             type: .session,
-            appID: instance.config.appID,
             deviceID: instance.identity.deviceID,
-            userID: instance.config.userID,
+            userID: instance.userIDBox.value,
             timestamp: Date(),
             sdkVersion: sdkVersion,
             device: instance.identity.deviceInfo,

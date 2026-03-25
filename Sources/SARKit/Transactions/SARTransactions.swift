@@ -1,20 +1,18 @@
 import Foundation
 import StoreKit
 
-/// Listens for StoreKit 2 transactions and sends them to the agent.
+/// Listens for StoreKit 2 transactions and sends them to the server.
 /// Captures: purchases, renewals, refunds, revocations — everything.
 @available(iOS 16.0, macOS 13.0, *)
 final class SARTransactions {
     private let client: SARClient
     private let identity: SARIdentity
-    private let appID: String
     private let userIDProvider: () -> String?
     private var updateTask: Task<Void, Never>?
 
-    init(client: SARClient, identity: SARIdentity, appID: String, userIDProvider: @escaping () -> String?) {
+    init(client: SARClient, identity: SARIdentity, userIDProvider: @escaping () -> String?) {
         self.client = client
         self.identity = identity
-        self.appID = appID
         self.userIDProvider = userIDProvider
     }
 
@@ -41,8 +39,6 @@ final class SARTransactions {
         updateTask = nil
     }
 
-    /// On each launch, iterate current entitlements to catch up on any
-    /// renewals, cancellations, or expirations that happened while app was closed.
     private func sendCurrentEntitlements() async {
         for await result in Transaction.currentEntitlements {
             await handleVerificationResult(result, source: "entitlement")
@@ -75,16 +71,13 @@ final class SARTransactions {
             "quantity": AnyCodable(transaction.purchasedQuantity),
         ]
 
-        // Environment (iOS 16+ / macOS 13+)
         data["environment"] = AnyCodable(environmentString(transaction.environment))
 
-        // Price
         if let price = transaction.price {
             data["price"] = AnyCodable(NSDecimalNumber(decimal: price).doubleValue)
             data["currency"] = AnyCodable(transaction.currency?.identifier ?? "unknown")
         }
 
-        // Subscription-specific
         if let expirationDate = transaction.expirationDate {
             data["expirationDate"] = AnyCodable(iso8601.string(from: expirationDate))
             data["isExpired"] = AnyCodable(expirationDate < Date())
@@ -97,7 +90,6 @@ final class SARTransactions {
         }
         data["isUpgraded"] = AnyCodable(transaction.isUpgraded)
 
-        // JWS — the cryptographic proof, verifiable server-side
         let jsonRep = transaction.jsonRepresentation
         if let jsonString = String(data: jsonRep, encoding: .utf8) {
             data["jwsPayload"] = AnyCodable(jsonString)
@@ -105,7 +97,6 @@ final class SARTransactions {
 
         let event = SAREvent(
             type: .transaction,
-            appID: appID,
             deviceID: identity.deviceID,
             userID: userIDProvider(),
             timestamp: Date(),

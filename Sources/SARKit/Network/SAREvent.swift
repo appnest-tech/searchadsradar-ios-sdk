@@ -1,16 +1,15 @@
 import Foundation
 
-/// The event types that SARKit sends to the agent.
+/// The event types that SARKit sends to the server.
 public enum SAREventType: String, Codable {
     case attribution
     case transaction
     case session
 }
 
-/// A single event payload sent to the SearchAdsRadar agent.
+/// A single event payload sent to the SearchAdsRadar server.
 public struct SAREvent: Codable {
     let type: SAREventType
-    let appID: String
     let deviceID: String
     let userID: String?
     let timestamp: Date
