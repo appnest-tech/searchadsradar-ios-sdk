@@ -30,11 +30,13 @@ final class SARIdentity: Sendable {
     private var deviceModel: String {
         var systemInfo = utsname()
         uname(&systemInfo)
-        return withUnsafePointer(to: &systemInfo.machine) {
-            $0.withMemoryRebound(to: CChar.self, capacity: 1) {
-                String(validatingUTF8: $0) ?? "unknown"
+        let machine = withUnsafePointer(to: &systemInfo.machine) {
+            $0.withMemoryRebound(to: CChar.self, capacity: Int(_SYS_NAMELEN)) {
+                guard $0.pointee != 0 else { return nil as String? }
+                return String(cString: $0)
             }
         }
+        return machine ?? "unknown"
     }
 
     private var osVersion: String {
