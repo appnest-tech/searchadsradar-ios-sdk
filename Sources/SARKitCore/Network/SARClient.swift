@@ -61,7 +61,13 @@ public final class SARClient: @unchecked Sendable {
             semaphore.signal()
         }
         task.resume()
-        semaphore.wait()
+
+        // Wait max 20 seconds — never block forever if server is down
+        let result = semaphore.wait(timeout: .now() + 20)
+        if result == .timedOut {
+            task.cancel()
+            SARLog.error("Send timed out — server may be down")
+        }
 
         if !success {
             pendingEvents.append(event)
