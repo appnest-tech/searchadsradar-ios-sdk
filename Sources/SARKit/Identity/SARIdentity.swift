@@ -30,15 +30,13 @@ final class SARIdentity: Sendable {
     }
 
     private var deviceModel: String {
-        var systemInfo = utsname()
-        uname(&systemInfo)
-        let machine = withUnsafePointer(to: &systemInfo.machine) {
-            $0.withMemoryRebound(to: CChar.self, capacity: Int(_SYS_NAMELEN)) {
-                guard $0.pointee != 0 else { return nil as String? }
-                return String(cString: $0)
-            }
-        }
-        return machine ?? "unknown"
+        // Use sysctlbyname instead of uname — safer in app extensions
+        var size: Int = 0
+        sysctlbyname("hw.machine", nil, &size, nil, 0)
+        guard size > 0 else { return "unknown" }
+        var machine = [CChar](repeating: 0, count: size)
+        sysctlbyname("hw.machine", &machine, &size, nil, 0)
+        return String(cString: machine)
     }
 
     private var osVersion: String {
