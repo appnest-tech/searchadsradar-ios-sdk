@@ -106,7 +106,7 @@ public final class SARClient: @unchecked Sendable {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("SARKit/\(SARKitCore.sdkVersion)", forHTTPHeaderField: "User-Agent")
+        request.setValue("SARKit/\(SARKitCore.effectiveSDKVersion)", forHTTPHeaderField: "User-Agent")
         request.setValue(config.apiKey, forHTTPHeaderField: "x-api-key")
 
         do {

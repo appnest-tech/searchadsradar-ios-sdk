@@ -41,7 +41,7 @@ let package = Package(
         ),
         .testTarget(
             name: "SARKitTests",
-            dependencies: ["SARKit"]
+            dependencies: ["SARKit", "SARKitCore"]
         )
     ]
 )

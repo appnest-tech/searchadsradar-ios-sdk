@@ -13,6 +13,23 @@ import Foundation
 public final class SARKitCore {
     public static let sdkVersion = "3.0.0"
 
+    /// Wrapper identity ("flutter-1.0.0"), set by cross-platform wrappers
+    /// BEFORE configure(). Folded into every event's sdkVersion.
+    /// internal(set) so tests can reset it.
+    public internal(set) static var wrapperInfo: String?
+
+    /// Called by the Flutter/RN bridge before configure().
+    public static func setWrapperInfo(platform: String, version: String) {
+        wrapperInfo = "\(platform)-\(version)"
+    }
+
+    /// The version string events report: "3.1.0" natively,
+    /// "flutter-1.0.0+sarkit-3.1.0" under a wrapper.
+    public static var effectiveSDKVersion: String {
+        guard let wrapperInfo else { return sdkVersion }
+        return "\(wrapperInfo)+sarkit-\(sdkVersion)"
+    }
+
     public static var shared: SARKitCore?
 
     public let config: SARConfig

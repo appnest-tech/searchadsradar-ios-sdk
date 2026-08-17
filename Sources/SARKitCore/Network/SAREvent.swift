@@ -26,7 +26,7 @@ public struct SAREvent: Codable {
         deviceID: String,
         userID: String?,
         timestamp: Date = Date(),
-        sdkVersion: String = SARKitCore.sdkVersion,
+        sdkVersion: String = SARKitCore.effectiveSDKVersion,
         device: SARDeviceInfo,
         data: [String: AnyCodable]
     ) -> SAREvent {
