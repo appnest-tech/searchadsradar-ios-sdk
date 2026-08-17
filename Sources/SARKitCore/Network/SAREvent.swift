@@ -10,6 +10,9 @@ public enum SAREventType: String, Codable {
 /// A single event payload sent to the SearchAdsRadar server.
 public struct SAREvent: Codable {
     let type: SAREventType
+    /// Client-minted idempotency key (UUID v4). The server dedupes re-delivered
+    /// events on it. Optional so pre-3.1.0 queued events still decode.
+    let eventID: String?
     let anonymousID: String
     let bundleID: String
     let deviceID: String
@@ -32,6 +35,7 @@ public struct SAREvent: Codable {
     ) -> SAREvent {
         SAREvent(
             type: type,
+            eventID: UUID().uuidString,
             anonymousID: anonymousID,
             bundleID: Bundle.main.bundleIdentifier ?? "unknown",
             deviceID: deviceID,
