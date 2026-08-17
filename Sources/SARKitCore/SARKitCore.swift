@@ -11,7 +11,7 @@ import Foundation
 /// SARKitCore.track("keyboard_opened")
 /// ```
 public final class SARKitCore {
-    public static let sdkVersion = "3.0.0"
+    public static let sdkVersion = "3.1.0"
 
     /// Wrapper identity ("flutter-1.0.0"), set by cross-platform wrappers
     /// BEFORE configure(). Folded into every event's sdkVersion.
