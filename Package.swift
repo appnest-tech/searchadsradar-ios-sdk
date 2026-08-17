@@ -4,7 +4,8 @@ import PackageDescription
 let package = Package(
     name: "SARKit",
     platforms: [
-        .iOS(.v16)
+        .iOS(.v16),
+        .macOS(.v13)
     ],
     products: [
         // Full SDK — main app (StoreKit + AdServices + sessions)
