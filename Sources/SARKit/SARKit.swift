@@ -44,7 +44,10 @@ public final class SARKit {
 
     /// Clear user identity and reset state. Call on logout.
     public static func reset() {
-        transactions?.stopListening()
+        // Do NOT stop the transaction listener: logout only clears identity.
+        // Killing the listener here silently lost purchases between logout and
+        // the next cold launch (nothing could restart it — configure() is
+        // duplicate-guarded).
         SARKitCore.reset()
     }
 
