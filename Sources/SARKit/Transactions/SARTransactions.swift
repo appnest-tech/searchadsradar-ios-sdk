@@ -48,8 +48,10 @@ public final class SARTransactions {
     private func handleVerificationResult(_ result: VerificationResult<Transaction>, source: String) async {
         switch result {
         case .verified(let transaction):
+            // Observer SDK: never finish() — finishing is the app's signal that
+            // it granted the entitlement. Finishing here races the host app's
+            // purchase handling (worst under Flutter/RN purchase plugins).
             sendTransaction(transaction, verified: true, source: source)
-            await transaction.finish()
         case .unverified(let transaction, let error):
             SARLog.error("Unverified transaction \(transaction.id): \(error)")
             sendTransaction(transaction, verified: false, source: source)
